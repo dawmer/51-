@@ -1,0 +1,172 @@
+C51 COMPILER V9.60.0.0   LCD                                                               11/10/2022 09:52:16 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE LCD
+OBJECT MODULE PLACED IN lcd.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE Àƒ¬∑≤…ºØ¥Æø⁄œ‘ æ\lcd.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\Àƒ¬∑≤…ºØ¥Æø⁄œ‘ 
+                    -æ) DEBUG OBJECTEXTEND PRINT(.\lcd.lst) OBJECT(lcd.obj)
+
+line level    source
+
+   1          #include "lcd.h"
+   2          uchar x,y;
+   3          /*******************************************************************************
+   4          * ∫Ø  ˝ √˚         : Lcd1602_Delay1ms
+   5          * ∫Ø ˝π¶ƒ‹                 : —” ±∫Ø ˝£¨—” ±1ms
+   6          *  ‰    »Î         : c
+   7          *  ‰    ≥ˆ         : Œﬁ
+   8          * Àµ    √˚         : ∏√∫Ø ˝ «‘⁄12MHZæß’Òœ¬£¨12∑÷∆µµ•∆¨ª˙µƒ—” ±°£
+   9          *******************************************************************************/
+  10          
+  11          void Lcd1602_Delay1ms(uint c)   //ŒÛ≤Ó 0us
+  12          {
+  13   1          uchar a,b;
+  14   1              for (; c>0; c--)
+  15   1              {
+  16   2                       for (b=199;b>0;b--)
+  17   2                       {
+  18   3                              for(a=1;a>0;a--);
+  19   3                       }      
+  20   2              }
+  21   1              
+  22   1      }
+  23          
+  24          void LCD_pos(uchar x,uchar y)
+  25          {
+  26   1              uchar pos;
+  27   1        if(x==0)x=0x80;
+  28   1        else if(x==1)x=0x90;
+  29   1              else if(x==2)x=0x88;
+  30   1              else if(x==3)x=0x98;
+  31   1              pos=x+y;
+  32   1              LcdWriteCom(pos);
+  33   1      }
+  34          
+  35          /*******************************************************************************
+  36          * ∫Ø  ˝ √˚         : LcdWriteCom
+  37          * ∫Ø ˝π¶ƒ‹                 : œÚLCD–¥»Î“ª∏ˆ◊÷Ω⁄µƒ√¸¡Ó
+  38          *  ‰    »Î         : com
+  39          *  ‰    ≥ˆ         : Œﬁ
+  40          *******************************************************************************/
+  41          #ifndef         LCD1602_4PINS    //µ±√ª”–∂®“Â’‚∏ˆLCD1602_4PINS ±
+  42          void LcdWriteCom(uchar com)       //–¥»Î√¸¡Ó
+  43          {
+  44   1              LCD1602_E = 0;     // πƒ‹
+  45   1              LCD1602_RS = 0;    //—°‘Ò∑¢ÀÕ√¸¡Ó
+  46   1              LCD1602_RW = 0;    //—°‘Ò–¥»Î
+  47   1              
+  48   1              LCD1602_DATAPINS = com;     //∑≈»Î√¸¡Ó
+  49   1              Lcd1602_Delay1ms(1);            //µ»¥˝ ˝æ›Œ»∂®
+  50   1      
+  51   1              LCD1602_E = 1;            //–¥»Î ±–Ú
+  52   1              Lcd1602_Delay1ms(5);      //±£≥÷ ±º‰
+  53   1              LCD1602_E = 0;
+  54   1      }
+C51 COMPILER V9.60.0.0   LCD                                                               11/10/2022 09:52:16 PAGE 2   
+
+  55          #else 
+              void LcdWriteCom(uchar com)       //–¥»Î√¸¡Ó
+              {
+                      LCD1602_E = 0;   // πƒ‹«Â¡„
+                      LCD1602_RS = 0;  //—°‘Ò–¥»Î√¸¡Ó
+                      LCD1602_RW = 0;  //—°‘Ò–¥»Î
+              
+                      LCD1602_DATAPINS = com; //”…”⁄4ŒªµƒΩ”œﬂ «Ω”µΩP0ø⁄µƒ∏ﬂÀƒŒª£¨À˘“‘¥´ÀÕ∏ﬂÀƒŒª≤ª”√∏ƒ
+                      Lcd1602_Delay1ms(1);
+              
+                      LCD1602_E = 1;   //–¥»Î ±–Ú
+                      Lcd1602_Delay1ms(5);
+                      LCD1602_E = 0;
+              
+                      LCD1602_DATAPINS = com << 4; //∑¢ÀÕµÕÀƒŒª
+                      Lcd1602_Delay1ms(1);
+              
+                      LCD1602_E = 1;   //–¥»Î ±–Ú
+                      Lcd1602_Delay1ms(5);
+                      LCD1602_E = 0;
+              }
+              #endif
+  77          /*******************************************************************************
+  78          * ∫Ø  ˝ √˚         : LcdWriteData
+  79          * ∫Ø ˝π¶ƒ‹                 : œÚLCD–¥»Î“ª∏ˆ◊÷Ω⁄µƒ ˝æ›
+  80          *  ‰    »Î         : dat
+  81          *  ‰    ≥ˆ         : Œﬁ
+  82          *******************************************************************************/                   
+  83          #ifndef         LCD1602_4PINS              
+  84          void LcdWriteData(uchar dat)                    //–¥»Î ˝æ›
+  85          {
+  86   1              LCD1602_E = 0;  // πƒ‹«Â¡„
+  87   1              LCD1602_RS = 1; //—°‘Ò ‰»Î ˝æ›
+  88   1              LCD1602_RW = 0; //—°‘Ò–¥»Î
+  89   1      
+  90   1              LCD1602_DATAPINS = dat; //–¥»Î ˝æ›
+  91   1              Lcd1602_Delay1ms(1);
+  92   1      
+  93   1              LCD1602_E = 1;   //–¥»Î ±–Ú
+  94   1              Lcd1602_Delay1ms(5);   //±£≥÷ ±º‰
+  95   1              LCD1602_E = 0;
+  96   1      }
+  97          #else
+              void LcdWriteData(uchar dat)                    //–¥»Î ˝æ›
+              {
+                      LCD1602_E = 0;    // πƒ‹«Â¡„
+                      LCD1602_RS = 1;   //—°‘Ò–¥»Î ˝æ›
+                      LCD1602_RW = 0;   //—°‘Ò–¥»Î
+              
+                      LCD1602_DATAPINS = dat; //”…”⁄4ŒªµƒΩ”œﬂ «Ω”µΩP0ø⁄µƒ∏ﬂÀƒŒª£¨À˘“‘¥´ÀÕ∏ﬂÀƒŒª≤ª”√∏ƒ
+                      Lcd1602_Delay1ms(1);
+              
+                      LCD1602_E = 1;    //–¥»Î ±–Ú
+                      Lcd1602_Delay1ms(5);
+                      LCD1602_E = 0;
+              
+                      LCD1602_DATAPINS = dat << 4; //–¥»ÎµÕÀƒŒª
+                      Lcd1602_Delay1ms(1);
+              
+                      LCD1602_E = 1;    //–¥»Î ±–Ú
+                      Lcd1602_Delay1ms(5);
+                      LCD1602_E = 0;
+C51 COMPILER V9.60.0.0   LCD                                                               11/10/2022 09:52:16 PAGE 3   
+
+              }
+              #endif
+ 119          /*******************************************************************************
+ 120          * ∫Ø  ˝ √˚       : LcdInit()
+ 121          * ∫Ø ˝π¶ƒ‹               : ≥ı ºªØLCD∆¡
+ 122          *  ‰    »Î       : Œﬁ
+ 123          *  ‰    ≥ˆ       : Œﬁ
+ 124          *******************************************************************************/                   
+ 125          #ifndef         LCD1602_4PINS
+ 126          void LcdInit()                                            //LCD≥ı ºªØ◊”≥Ã–Ú
+ 127          {
+ 128   1              LcdWriteCom(0x38);  //ø™œ‘ æ
+ 129   1              LcdWriteCom(0x0c);  //ø™œ‘ æ≤ªœ‘ æπ‚±Í
+ 130   1              LcdWriteCom(0x06);  //–¥“ª∏ˆ÷∏’Îº”1
+ 131   1              LcdWriteCom(0x01);  //«Â∆¡
+ 132   1              LcdWriteCom(0x80);  //…Ë÷√ ˝æ›÷∏’Î∆µ„
+ 133   1      }
+ 134          #else
+              void LcdInit()                                            //LCD≥ı ºªØ◊”≥Ã–Ú
+              {
+                      LcdWriteCom(0x32);       //Ω´8Œª◊‹œﬂ◊™Œ™4Œª◊‹œﬂ
+                      LcdWriteCom(0x28);       //‘⁄ÀƒŒªœﬂœ¬µƒ≥ı ºªØ
+                      LcdWriteCom(0x0c);  //ø™œ‘ æ≤ªœ‘ æπ‚±Í
+                      LcdWriteCom(0x06);  //–¥“ª∏ˆ÷∏’Îº”1
+                      LcdWriteCom(0x01);  //«Â∆¡
+                      LcdWriteCom(0x80);  //…Ë÷√ ˝æ›÷∏’Î∆µ„
+              }
+              #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    153    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

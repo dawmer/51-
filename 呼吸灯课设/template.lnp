@@ -1,0 +1,8 @@
+"main.obj",
+"zdinit.obj",
+"DA-AD.obj",
+"I2C.obj",
+"oled.obj",
+"ds1302.obj" 
+TO "template" 
+RAMSIZE(256) 

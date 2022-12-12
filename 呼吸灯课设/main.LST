@@ -1,0 +1,226 @@
+C51 COMPILER V9.60.0.0   MAIN                                                              11/13/2022 19:35:40 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE INCDIR(.\四路采集串口显示) DEBUG OBJECTE
+                    -XTEND
+
+line level    source
+
+   1          
+   2          #include "reg52.h"                       
+   3          #include "zdinit.h"
+   4          #include <I2C.H>
+   5          #include "oled.h"
+   6          #include "ds1302.h"
+   7          //对数据类型进行声明定义
+   8          //typedef unsigned char u8;
+   9          //typedef unsigned int u16;
+  10          
+  11          
+  12          sbit k1=P3^0;
+  13          sbit k2=P3^1;
+  14          sbit k3=P3^2;
+  15          sbit k4=P3^3;
+  16          //u8 on[8]={0xfe,0xfd,0xfb,0xf7,0xef,0xdf,0xbf,0x7f};
+  17          unsigned char on[5]={0xfb,0xf7,0xef,0xdf,0xdf};
+  18          //#define SYSCLOCK      11059200                //晶振频率是11.0592MHZ
+  19          #define SYSCLOCK        12000000                //晶振频率是12MHZ
+  20          
+  21          unsigned char heighHR0, heighLR0;//PWM一个周期中高电平高字节和低字节重载值
+  22          unsigned char lowHR0,lowLR0;//PWM一个机器周期中低电平时高字节和低字节重载值
+  23          void PWM_Config(unsigned int fr, unsigned char dc);
+  24          void PWM_Close();
+  25          char i=0,fx=0,sum[4],n,flag;
+  26          int cont=0,vint;
+  27          void UART_Init()
+  28          {
+  29   1          TMOD=0x20;//设置定时器1的工作方式2---8位自动装填
+  30   1              TH1=0xfd;//设置初始值:使比特率为9600bps
+  31   1              TL1=0xfd;
+  32   1              PCON=0x00;//SMOD=0，不加倍
+  33   1              TR1=1;//打开定时器中断开关
+  34   1              REN=1;//打开允许串行接收位
+  35   1              SM0=0;//设置串行口通讯方式为方式1
+  36   1              SM1=1;
+  37   1      //      EA=1; //打开总中断
+  38   1      }
+  39          // void Timer1init()
+  40          // {
+  41          //       TMOD=0x10;          //工作于方式1
+  42          //      //0 0 方式0 13位计数器 TMOD=0x00
+  43          //      //0 1 方式1 16位计数器 TMOD=0x01
+  44          //      //1 0 方式2 自动重装8位计数器 TMOD=0x02
+  45          //      //1 1 方式3 T0分为2个8位独立计数器，T1为无中断重装8位计数器 TMOD=0x03
+  46          //    EA=1;              // 中断允许
+  47          //    ET1=1;                                             // 中断1打开
+  48          //      TH1=(65536-50000)/256;       // (65536-50000)/256=60.6875
+  49          //      TL1=(65536-50000)%256;      
+  50          //      TR1=1;
+  51          
+  52          // }
+  53          void UART_SendByte(unsigned char Byte)
+  54          {
+C51 COMPILER V9.60.0.0   MAIN                                                              11/13/2022 19:35:40 PAGE 2   
+
+  55   1              SBUF=Byte;    //把Byte的值赋给缓存SBUF
+  56   1              while(TI==0); //确认发送控制器TI标志位的状态，只有当TI不等于0时，才会跳出循环
+  57   1              TI=0;         //清除发送完成标志位
+  58   1      }
+  59          void main()
+  60          {
+  61   1              keyInit();
+  62   1              OLED_Init();
+  63   1              OLED_Clear();
+  64   1              PCF8591init();
+  65   1      //      UART_Init();
+  66   1              Ds1302Init();
+  67   1      //      Timer1init();
+  68   1              while (1)     //呼吸灯效果
+  69   1              {
+  70   2                      Ds1302ReadTime();
+  71   2                      vint=IRcvByte(0x90);
+  72   2      //              UART_SendByte(vint*5/255*10);
+  73   2                      if(fx==0)
+  74   2                      {
+  75   3                              cont+=(11-vint*5/255*2);
+  76   3                              if(cont>=80)
+  77   3                              {
+  78   4                                      fx=1;
+  79   4                                      sum[i]++;
+  80   4                              }                               
+  81   3                      }
+  82   2                      else
+  83   2                      {
+  84   3                              cont-=(11-vint*5/255*2);
+  85   3                              if(cont<=0)
+  86   3                              {
+  87   4                                      cont=1;
+  88   4                                      fx=0;
+  89   4                              }                               
+  90   3                      }
+  91   2                      //LED亮->暗
+  92   2                      PWM_Config(200, cont);//配置PWM频率为100HZ,占空比为cont%
+  93   2                      delayus(1000);
+  94   2      //              delayus(10000+vint*5/255*60000);
+  95   2                      for(n=0;n<4;n++)
+  96   2                      {
+  97   3                      OLED_ShowNum(n*32+2,0,sum[n],3,16);
+  98   3                      }
+  99   2                      OLED_ShowString(2,2,"2022",16);
+ 100   2                      OLED_ShowChar(42,2,TIME[4]/16+'0',16);//月
+ 101   2                      OLED_ShowChar(53,2,TIME[4]%16+'0',16);
+ 102   2                      OLED_ShowChar(76,2,TIME[3]/16+'0',16);//日
+ 103   2                      OLED_ShowChar(87,2,TIME[3]%16+'0',16);          
+ 104   2                      OLED_ShowChar(2,4,TIME[2]/16+'0',16);
+ 105   2                      OLED_ShowChar(13,4,TIME[2]%16+'0',16);
+ 106   2                      OLED_ShowString(22,4,":",16);
+ 107   2                      OLED_ShowChar(30,4,TIME[1]/16+'0',16);
+ 108   2                      OLED_ShowChar(41,4,TIME[1]%16+'0',16);
+ 109   2                      OLED_ShowString(50,4,":",16);
+ 110   2                      OLED_ShowChar(58,4,TIME[0]/16+'0',16);
+ 111   2                      OLED_ShowChar(69,4,TIME[0]%16+'0',16);
+ 112   2                      OLED_ShowString(2,6,"vin:",8);
+ 113   2                      OLED_ShowNum(32,6,vint*5/255,1,8);
+ 114   2                      OLED_ShowString(41,6,".",8);
+ 115   2                      OLED_ShowNum(45,6,vint*5*10/255%10,1,8);
+ 116   2                      OLED_ShowString(66,6,"speed:",8);
+C51 COMPILER V9.60.0.0   MAIN                                                              11/13/2022 19:35:40 PAGE 3   
+
+ 117   2                      OLED_ShowNum(110,6,11-vint*5/255*2,2,8);
+ 118   2      //              PWM_Close();
+ 119   2              } 
+ 120   1      }
+ 121          
+ 122          
+ 123          
+ 124          
+ 125          /*使用T0配置PWM高低电平的频率*/
+ 126          void PWM_Config(unsigned int fr, unsigned char dc)  //fr为PWM的频率，100HZ无闪烁，dc是PWM的占空比(高电平占
+             -的百分比)
+ 127          {
+ 128   1              long tmp;
+ 129   1              unsigned int heigh, low;
+ 130   1              
+ 131   1              tmp = SYSCLOCK/12;//一个机器周期频率
+ 132   1              tmp = tmp / fr;  //一个机器周期中fr的频率所需计数值(包括高电平和低电平)
+ 133   1              heigh = (tmp * dc) / 100;//高电平占dc%，所需计数值
+ 134   1              low   = tmp - heigh;//低电平所需计数值
+ 135   1              heigh = 65536-heigh;//高电平计数初值
+ 136   1              low   = 65536-low;//低电平计数初值
+ 137   1              
+ 138   1              heighHR0 = (unsigned char)(heigh >> 8);//高电平装入初值的高字节
+ 139   1              heighLR0 = (unsigned char)heigh;    //高电平装入初值的低字节
+ 140   1              lowHR0   = (unsigned char)(low >> 8);  //低电平装入初值的高字节
+ 141   1              lowLR0   = (unsigned char)low;    //低电平装入初值的低字节
+ 142   1              
+ 143   1              TMOD &= 0xF0;//清零T0控制位
+ 144   1              TMOD |= 0x01;//设定T0工作方式1,16位可设定时器
+ 145   1              TH0 = heighHR0;
+ 146   1              TL0 = heighLR0;//装入高电平计数初值
+ 147   1      //      P2 = 0xff;//开始时PWM输出高电平
+ 148   1              TR0 = 1;
+ 149   1              ET0 = 1;
+ 150   1              EA  = 1;
+ 151   1      }
+ 152          
+ 153          
+ 154          void PWM_Close()
+ 155          {
+ 156   1              TR0 = 0;//关闭Timer0
+ 157   1              ET0 = 0;//关闭T0中断
+ 158   1              P2 = 0XFF;//PWM输出高电平
+ 159   1      }
+ 160          /*定时器T0中断服务*/
+ 161          void Timer0_ISP() interrupt 1
+ 162          {
+ 163   1              //判断PWM现在输出的是高电平还是低电平
+ 164   1              if (P2==0xff)//P2==0xff P2&&(0x04<<i)
+ 165   1              {
+ 166   2                      TH0 = lowHR0;
+ 167   2                      TL0 = lowLR0;//装载低电平计数初值
+ 168   2                      P2 =on[i];//PWM输出低电平
+ 169   2              }
+ 170   1              else
+ 171   1              {
+ 172   2                      TH0 = heighHR0;
+ 173   2                      TL0 = heighLR0;//重装装载高电平计数初值
+ 174   2                      P2 =0xff;//PWM输出高电平
+ 175   2              }
+ 176   1      }
+ 177          
+C51 COMPILER V9.60.0.0   MAIN                                                              11/13/2022 19:35:40 PAGE 4   
+
+ 178          void extern0_ISP() interrupt 0
+ 179          {
+ 180   1              if(k3==0)
+ 181   1              {
+ 182   2                      delayus(1000);
+ 183   2                      if(k3==0)
+ 184   2                      {
+ 185   3                              cont=1;
+ 186   3                              fx=0;
+ 187   3                              i++;
+ 188   3                              if(i>=4)
+ 189   3                                      i=0;
+ 190   3                      }
+ 191   2              }
+ 192   1                      
+ 193   1      }
+ 194          
+ 195          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    946    ----
+   CONSTANT SIZE    =     21    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     21       5
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,8 @@
+"main.obj",
+"lcd.obj",
+"wdh.obj",
+"temp.obj",
+"sj.obj",
+"sz.obj" 
+TO "template" 
+RAMSIZE(256) 

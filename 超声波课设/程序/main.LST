@@ -1,0 +1,239 @@
+C51 COMPILER V9.60.0.0   MAIN                                                              12/12/2022 12:55:52 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          
+   2          #include<REG52.h>
+   3          #include<intrins.h>
+   4          #include <uart.h>
+   5          #include"lcd.h"
+   6          
+   7          sbit Trig = P1^0;
+   8          sbit Echo = P1^1;
+   9          sbit Trig1 = P1^2;
+  10          sbit Echo1 = P1^3;
+  11          
+  12          
+  13          unsigned char PuZh[]=" distance ";
+  14          unsigned char code ASCII[13] =    {'0','1','2','3','4','5','6','7','8','9','.','-','M'};
+  15          
+  16          static unsigned char DisNum = 0; //��ʾ��ָ��                                 
+  17                 unsigned int  time=0;
+  18                     unsigned long S=0,S1;
+  19                     bit      flag =0;
+  20                     unsigned char disbuff[4]        ={ 0,0,0,0,};
+  21                     unsigned char disbuff1[4]       ={ 0,0,0,0,};
+  22          /*******************************************************************************
+  23          * �� �� ��         : main
+  24          * ��������                 : ������
+  25          * ��    ��         : ��
+  26          * ��    ��         : ��
+  27          *******************************************************************************/
+  28          void Conut(void)
+  29                  {
+  30   1               time=TH0*256+TL0;
+  31   1               TH0=0;
+  32   1               TL0=0;
+  33   1              
+  34   1               S=(time*1.7)/10;     //�������CM
+  35   1               if((S>=7000)||flag==1) //����������Χ��ʾ��-��
+  36   1               {       
+  37   2                   flag=0;
+  38   2                       LCD_pos(0,0);
+  39   2                       LcdWriteData(ASCII[11]);
+  40   2                       LcdWriteData(ASCII[10]);
+  41   2                       LcdWriteData(ASCII[11]);
+  42   2                       LcdWriteData(ASCII[11]);
+  43   2                       LcdWriteData(ASCII[11]);
+  44   2                       LcdWriteData(ASCII[12]);
+  45   2               }
+  46   1               else
+  47   1               {
+  48   2                disbuff[0]=S%10000/1000;
+  49   2                disbuff[1]=S%10000%1000/100;
+  50   2                disbuff[2]=S%10000%1000%100/10;
+  51   2                disbuff[3]=S%10000%10;
+  52   2                       LCD_pos(0,0);
+  53   2                       LcdWriteData(ASCII[disbuff[0]]);
+  54   2                       LcdWriteData(ASCII[10]);
+  55   2                       LcdWriteData(ASCII[disbuff[1]]);
+C51 COMPILER V9.60.0.0   MAIN                                                              12/12/2022 12:55:52 PAGE 2   
+
+  56   2                       LcdWriteData(ASCII[disbuff[2]]);
+  57   2                       LcdWriteData(disbuff[3]+'0');
+  58   2                       LcdWriteData(ASCII[12]);
+  59   2                       UART_SendByte('A');
+  60   2                       UART_SendByte(ASCII[disbuff[0]]);
+  61   2                       UART_SendByte(ASCII[10]);
+  62   2                       UART_SendByte(ASCII[disbuff[1]]);
+  63   2                       UART_SendByte(ASCII[disbuff[2]]);
+  64   2                       UART_SendByte(ASCII[disbuff[3]]);
+  65   2                       UART_SendByte('\r');
+  66   2                       UART_SendByte('\n');
+  67   2               }
+  68   1              }
+  69          void Conut1(void)
+  70                  {
+  71   1               time=TH0*256+TL0;
+  72   1               TH0=0;
+  73   1               TL0=0;
+  74   1              
+  75   1               S1=(time*1.7)/10;     //�������mM
+  76   1               if((S1>=7000)||flag==1) //����������Χ��ʾ��-��
+  77   1               {       
+  78   2                   flag=0;
+  79   2                       LCD_pos(1,0);
+  80   2                       LcdWriteData(ASCII[11]);
+  81   2                       LcdWriteData(ASCII[10]);
+  82   2                       LcdWriteData(ASCII[11]);
+  83   2                       LcdWriteData(ASCII[11]);
+  84   2                       LcdWriteData(ASCII[11]);
+  85   2                       LcdWriteData(ASCII[12]);
+  86   2               }
+  87   1               else
+  88   1               {
+  89   2                disbuff1[0]=S1%10000/1000;
+  90   2                disbuff1[1]=S1%10000%1000/100;
+  91   2                disbuff1[2]=S1%10000%1000%100/10;
+  92   2                disbuff1[3]=S1%10000%10;
+  93   2                       LCD_pos(1,0);
+  94   2                       LcdWriteData(ASCII[disbuff1[0]]);
+  95   2                       LcdWriteData(ASCII[10]);
+  96   2                       LcdWriteData(ASCII[disbuff1[1]]);
+  97   2                       LcdWriteData(ASCII[disbuff1[2]]);
+  98   2                       LcdWriteData(disbuff1[3]+'0');
+  99   2                       LcdWriteData(ASCII[12]);
+ 100   2                       UART_SendByte('B');
+ 101   2                       UART_SendByte(ASCII[disbuff1[0]]);
+ 102   2                       UART_SendByte(ASCII[10]);
+ 103   2                       UART_SendByte(ASCII[disbuff1[1]]);
+ 104   2                       UART_SendByte(ASCII[disbuff1[2]]);
+ 105   2                       UART_SendByte(ASCII[disbuff1[3]]);
+ 106   2                       UART_SendByte('\r');
+ 107   2                       UART_SendByte('\n');
+ 108   2               }
+ 109   1              }
+ 110          void zd0() interrupt 1           //T0�ж��������������,������෶Χ
+ 111            {
+ 112   1          flag=1;                                                      //�ж������־
+ 113   1        }
+ 114          
+ 115           void  StartModule()                     //����ģ��
+ 116            {
+ 117   1                Trig=1;                                            //����һ��ģ��
+C51 COMPILER V9.60.0.0   MAIN                                                              12/12/2022 12:55:52 PAGE 3   
+
+ 118   1                _nop_(); 
+ 119   1                _nop_(); 
+ 120   1                _nop_(); 
+ 121   1                _nop_(); 
+ 122   1                _nop_(); 
+ 123   1                _nop_(); 
+ 124   1                _nop_(); 
+ 125   1                _nop_(); 
+ 126   1                _nop_(); 
+ 127   1                _nop_(); 
+ 128   1                _nop_(); 
+ 129   1                _nop_(); 
+ 130   1                _nop_(); 
+ 131   1                _nop_(); 
+ 132   1                _nop_(); 
+ 133   1                _nop_(); 
+ 134   1                _nop_();
+ 135   1                _nop_(); 
+ 136   1                _nop_(); 
+ 137   1                _nop_(); 
+ 138   1                _nop_();
+ 139   1                Trig=0;
+ 140   1        }
+ 141          void  StartModule1()                     //����ģ��
+ 142            {
+ 143   1                Trig1=1;                                           //����һ��ģ��
+ 144   1                _nop_(); 
+ 145   1                _nop_(); 
+ 146   1                _nop_(); 
+ 147   1                _nop_(); 
+ 148   1                _nop_(); 
+ 149   1                _nop_(); 
+ 150   1                _nop_(); 
+ 151   1                _nop_(); 
+ 152   1                _nop_(); 
+ 153   1                _nop_(); 
+ 154   1                _nop_(); 
+ 155   1                _nop_(); 
+ 156   1                _nop_(); 
+ 157   1                _nop_(); 
+ 158   1                _nop_(); 
+ 159   1                _nop_(); 
+ 160   1                _nop_();
+ 161   1                _nop_(); 
+ 162   1                _nop_(); 
+ 163   1                _nop_(); 
+ 164   1                _nop_();
+ 165   1                Trig1=0;
+ 166   1        }
+ 167          
+ 168          
+ 169          void delayms(unsigned int ms)
+ 170          {
+ 171   1              unsigned char i=100,j;
+ 172   1              for(;ms;ms--)
+ 173   1              {
+ 174   2                      while(--i)
+ 175   2                      {
+ 176   3                              j=10;
+ 177   3                              while(--j);
+ 178   3                      }
+ 179   2              }
+C51 COMPILER V9.60.0.0   MAIN                                                              12/12/2022 12:55:52 PAGE 4   
+
+ 180   1      }
+ 181          
+ 182          void main(void)
+ 183          {
+ 184   1      
+ 185   1               TMOD=0x01;                //��T0Ϊ��ʽ1��GATE=1��
+ 186   1               TH0=0;
+ 187   1               TL0=0;          
+ 188   1               ET0=1;             //����T0�ж�
+ 189   1               EA=1;                     //�������ж� 
+ 190   1              LcdInit();
+ 191   1              UartInit();
+ 192   1              while(1)
+ 193   1              {
+ 194   2                       StartModule();
+ 195   2                   while(!Echo);              //��RXΪ��ʱ�ȴ�
+ 196   2                   TR0=1;                         //��������
+ 197   2                   while(Echo);                       //��RXΪ1�������ȴ�
+ 198   2                   TR0=0;                             //�رռ���
+ 199   2               Conut();                       //����
+ 200   2                       delayms(30);
+ 201   2                       StartModule1();
+ 202   2                       while(!Echo1);         //��RXΪ��ʱ�ȴ�
+ 203   2                   TR0=1;                         //��������
+ 204   2                   while(Echo1);                      //��RXΪ1�������ȴ�
+ 205   2                   TR0=0;                             //�رռ���
+ 206   2               Conut1();                      //����
+ 207   2                       delayms(30);
+ 208   2              }
+ 209   1                              
+ 210   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1103    ----
+   CONSTANT SIZE    =     13    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     30    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

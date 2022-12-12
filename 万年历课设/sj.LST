@@ -1,0 +1,76 @@
+C51 COMPILER V9.60.0.0   SJ                                                                10/09/2022 16:01:02 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SJ
+OBJECT MODULE PLACED IN sj.OBJ
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE sj.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          
+   2          #include "reg52.h"                       //此文件中定义了单片机的一些特殊功能寄存器
+   3          #include "ds1302.h"     
+   4          extern uint a[7];
+   5          uint sj[12];
+   6          extern int i;
+   7          void datapros()          
+   8          {
+   9   1              int j;
+  10   1              if(i>=7)
+  11   1              Ds1302ReadTime();
+  12   1              sj[0] = TIME[6]/16;                             //年
+  13   1              sj[1] = TIME[6]&0x0f;
+  14   1              sj[2] =TIME[4]/16;                              //月
+  15   1              sj[3] = TIME[4]&0x0f;
+  16   1              sj[4] = TIME[3]/16;                             //日
+  17   1              sj[5] = TIME[3]&0x0f;
+  18   1              sj[6] = TIME[2]/16;                             //时
+  19   1              sj[7] = TIME[2]&0x0f;                            
+  20   1              sj[8] = TIME[1]/16;                             //分
+  21   1              sj[9] = TIME[1]&0x0f;   
+  22   1              sj[10] = TIME[0]/16;                            //秒
+  23   1              sj[11] = TIME[0]&0x0f;
+  24   1              for(j=0;j<12;j++)
+  25   1              if(sj[j]>9)
+  26   1              {
+  27   2                      sj[j]=sj[j]-10;
+  28   2                      sj[j-1]++;
+  29   2              }
+  30   1      }
+  31          
+  32          
+  33          /*******************************************************************************
+  34          * 函数名         :DigDisplay()
+  35          * 函数功能               :数码管显示函数
+  36          * 输入           : 无
+  37          * 输出           : 无
+  38          *****************************************************************************
+  39          /*******************************************************************************
+  40          * 函 数 名       : main
+  41          * 函数功能               : 主函数
+  42          * 输    入       : 无
+  43          * 输    出       : 无
+  44          *******************************************************************************/
+  45          void sjh()
+  46          {       
+  47   1      
+  48   1      
+  49   1                      datapros();      //数据处理函数         
+  50   1                      
+  51   1      }//
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    243    ----
+C51 COMPILER V9.60.0.0   SJ                                                                10/09/2022 16:01:02 PAGE 2   
+
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     24    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

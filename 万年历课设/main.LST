@@ -1,0 +1,142 @@
+C51 COMPILER V9.60.0.0   MAIN                                                              10/09/2022 16:01:02 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /*************************************************************************************
+   2          
+   3          *
+   4          ÊµÑéÏÖÏó£ºÏÂÔØ³ÌÐòºó²åÉÏLCD1602Òº¾§ÔÚ¿ª·¢°åÉÏ£¬¼´¿ÉÏÔÊ¾
+   5                            
+   6          ½ÓÏßËµÃ÷£º (¾ßÌå½ÓÏßÍ¼¿É¼û¿ª·¢¹¥ÂÔ¶ÔÓ¦ÊµÑéµÄ¡°ÊµÑéÏÖÏó¡±ÕÂ½Ú)
+   7          
+   8                  
+   9          ×¢ÒâÊÂÏî£º¸ù¾Ý×Ô¼ºÊ¹ÓÃµÄLCD1602ÊÇ·ñ´øÓÐ×ª½Ó°å£¬Èç¹û´øÓÐ×ª½Ó°åµÄ¼´Îª4Î»£¬ÐèÔÚLCD.HÍ·ÎÄ¼þÖÐ
+  10          ½«ºê#define LCD1602_4PINS´ò¿ª£¬ÎÒÃÇÕâÀïÊ¹ÓÃµÄLCD1602ÊÇ8Î»£¬ËùÒÔÄ¬ÈÏ½«¸Ãºê×¢ÊÍ                                                                           
+  11          
+  12                                                                                            
+  13          **************************************************************************************
+  14          
+  15          */
+  16          
+  17          #include "reg52.h"                       //´ËÎÄ¼þÖÐ¶¨ÒåÁËµ¥Æ¬»úµÄÒ»Ð©ÌØÊâ¹¦ÄÜ¼Ä´æÆ÷
+  18          #include "lcd.h"
+  19          #include"ds1302.h"
+  20          #include"temp.h"
+  21          void Int1Init();
+  22          void Int0Init();
+  23          sbit k3=P3^2;
+  24          sbit k4=P3^3;
+  25          uint a[7];
+  26          //extern sj[12];
+  27          int i=0;
+  28          extern uint TIME[7];
+  29          
+  30          /*******************************************************************************
+  31          * º¯ Êý Ãû         : main
+  32          * º¯Êý¹¦ÄÜ                 : Ö÷º¯Êý
+  33          * Êä    Èë         : ÎÞ
+  34          * Êä    ³ö         : ÎÞ
+  35          *******************************************************************************/
+  36          void LCD_pos(uchar x,uchar y)
+  37          {
+  38   1              uchar pos;
+  39   1        if(x==0)x=0x80;
+  40   1        else if(x==1)x=0x90;
+  41   1              else if(x==2)x=0x88;
+  42   1              else if(x==3)x=0x98;
+  43   1              pos=x+y;
+  44   1              LcdWriteCom(pos);
+  45   1      }
+  46          void Int0Init()
+  47          {
+  48   1      //ÉèÖÃ INT0
+  49   1          IT0=1;//Ìø±äÑØ³ö·¢·½Ê½£¨ÏÂ½µÑØ£©
+  50   1          EX0=1;//´ò¿ª INT0 µÄÖÐ¶ÏÔÊÐí¡£
+  51   1          EA=1;//´ò¿ª×ÜÖÐ¶Ï
+  52   1      }
+  53          
+  54          void Int0() interrupt 0 //Íâ²¿ÖÐ¶Ï 0 µÄÖÐ¶Ïº¯Êý
+  55          {
+C51 COMPILER V9.60.0.0   MAIN                                                              10/09/2022 16:01:02 PAGE 2   
+
+  56   1          Delay1ms(10); //ÑÓÊ±Ïû¶¶    
+  57   1                      if(k3==0)
+  58   1                      {
+  59   2                      i++;
+  60   2                }
+  61   1                       Delay1ms(100);
+  62   1      }
+  63          void Int1Init()
+  64          {
+  65   1      //ÉèÖÃ INT0
+  66   1          IT1=1;//Ìø±äÑØ³ö·¢·½Ê½£¨ÏÂ½µÑØ£©
+  67   1          EX1=1;//´ò¿ª INT0 µÄÖÐ¶ÏÔÊÐí¡£
+  68   1          EA=1;//´ò¿ª×ÜÖÐ¶Ï
+  69   1      }
+  70          void Int1() interrupt 2 //Íâ²¿ÖÐ¶Ï 1 µÄÖÐ¶Ïº¯Êý
+  71          {                       
+  72   1          Delay1ms(10); //ÑÓÊ±Ïû¶¶            
+  73   1                      if(k4==0)
+  74   1                      TIME[6-i]++;    
+  75   1      }
+  76          void main(void)
+  77          {
+  78   1                LcdInit();
+  79   1          Ds1302Init();          //µÚÒ»´Î³õÊ¼»¯ºó¾Í¿ÉÒÔ×¢ÊÍ¸ÃÌõÓï¾ä£¬ÕâÑùÏÂ´ÎÖØÆô¾Í²»»áÔÙ´Î³
+  80   1              while(1)
+  81   1              {
+  82   2                      Int0Init();
+  83   2                      Int1Init();
+  84   2                      wdh();
+  85   2                      if(i==7)
+  86   2                Ds1302Init();
+  87   2                      sjh();
+  88   2                      LCD_pos(0,0);
+  89   2                      LcdWriteData('2');
+  90   2                      LcdWriteData('0');      
+  91   2                      LcdWriteData('0'+sj[0]);
+  92   2                      LcdWriteData('0'+sj[1]);                
+  93   2                      LcdWriteData('-');
+  94   2                      LcdWriteData('0'+sj[2]);
+  95   2                      LcdWriteData('0'+sj[3]);
+  96   2                      LcdWriteData('-');
+  97   2                      LcdWriteData('0'+sj[4]);
+  98   2                      LcdWriteData('0'+sj[5]);
+  99   2                      LCD_pos(1,0);
+ 100   2                      LcdWriteData('0'+sj[6]);
+ 101   2                      LcdWriteData('0'+sj[7]);
+ 102   2                      LcdWriteData('-');
+ 103   2                      LcdWriteData('0'+sj[8]);
+ 104   2                      LcdWriteData('0'+sj[9]);
+ 105   2                      LcdWriteData(':');
+ 106   2                      LcdWriteData('0'+sj[10]);
+ 107   2                      LcdWriteData('0'+sj[11]);
+ 108   2                      LCD_pos(3,0);   
+ 109   2                      LcdWriteData('0'+i);
+ 110   2                      if(i==7)
+ 111   2                LcdWriteCom(0x01);  //ÇåÆÁ    
+ 112   2          if(i==9)
+ 113   2          i=0;                        
+ 114   2              }
+ 115   1      }
+
+
+C51 COMPILER V9.60.0.0   MAIN                                                              10/09/2022 16:01:02 PAGE 3   
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    436    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     16    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
